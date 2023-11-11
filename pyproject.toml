@@ -1,0 +1,102 @@
+[build-system]
+requires = [
+    # First version of setuptools to support pyproject.toml configuration
+    "setuptools>=61.0.0",
+    "wheel",
+    # Must be kept in sync with `project.dependencies`
+    "cffi>=1.12; platform_python_implementation != 'PyPy'",
+    "setuptools-rust>=1.7.0",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zkpytoolkit"
+version = "0.1.0"
+authors = [
+    {name = "Lorenzo Rota", email = "lorenzo.rota@tno.nl"}
+]
+description = "Zero-knowledge proof toolkit for verifiable computing."
+readme = "README.md"
+license = {text = "Apache-2.0 OR BSD-3-Clause"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: BSD",
+    "Operating System :: POSIX :: Linux",
+    'Operating System :: Microsoft :: Windows',
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Security :: Cryptography",
+]
+requires-python = ">=3.7"
+dependencies = [
+    # Must be kept in sync with `build-system.requires`
+    "cffi >=1.12",
+]
+
+#[project.urls]
+#homepage = "tba"
+#documentation = "tba"
+#source = "tba"
+#issues = "tba"
+#changelog = "tba"
+
+[tool.setuptools]
+zip-safe = false
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["zkpytoolkit*"]
+
+[[tool.setuptools-rust.ext-modules]]
+target = "zkpytoolkit.hazmat.bindings._rust"
+path = "src/rust/Cargo.toml"
+py-limited-api = true
+rust-version = ">=1.63.0"
+
+[tool.mypy]
+show_error_codes = true
+check_untyped_defs = true
+no_implicit_reexport = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+strict_equality = true
+
+# [[tool.mypy.overrides]]
+# module = [
+#     "pretend"
+# ]
+# ignore_missing_imports = true
+
+# [tool.coverage.run]
+# branch = true
+# relative_files = true
+# source = [
+#     "cryptography",
+#     "tests/",
+# ]
+
+# [tool.check-sdist]
+# git-only = [
+#     "vectors/*",
+#     "release.py",
+#     "ci-constraints-requirements.txt",
+#     ".gitattributes",
+#     ".gitignore",
+# ]

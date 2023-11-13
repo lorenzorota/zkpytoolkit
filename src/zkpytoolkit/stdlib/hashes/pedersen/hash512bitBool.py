@@ -1,9 +1,9 @@
-from zk_types.types import Array, field # zk_ignore
-from utils.multiplexer.lookup3bitSigned import main as sel3s
-from utils.multiplexer.lookup2bit import main as sel2
-from ecc.edwardsAdd import main as add
-from ecc.edwardsCompress import main as edwardsCompress
-from ecc.babyjubjubParams import BABYJUBJUB_PARAMS
+from zkpytoolkit.types import Array, field # zk_ignore
+from zkpytoolkit.stdlib.utils.multiplexer.lookup3bitSigned import main as sel3s
+from zkpytoolkit.stdlib.utils.multiplexer.lookup2bit import main as sel2
+from zkpytoolkit.stdlib.ecc.edwardsAdd import main as add
+from zkpytoolkit.stdlib.ecc.edwardsCompress import main as edwardsCompress
+from zkpytoolkit.stdlib.ecc.babyjubjubParams import BABYJUBJUB_PARAMS
 
 def main(inputs: Array[bool, 512]) -> Array[bool, 256]:
     e: Array[bool, 513] = [

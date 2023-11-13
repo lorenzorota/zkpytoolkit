@@ -1,5 +1,5 @@
-from zk_types.types import Array, field # zk_ignore
-from utils.pack.bool.nonStrictUnpack256 import main as unpack256
+from zkpytoolkit.types import Array, field # zk_ignore
+from zkpytoolkit.stdlib.utils.pack.bool.nonStrictUnpack256 import main as unpack256
 
 # Compress JubJub Curve Point to 256bit array using big endianness bit order
 

@@ -1,5 +1,5 @@
-from zk_types.types import Public, Array # zk_ignore
-from hashes.sha256.sha256 import shaRound
+from zkpytoolkit.types import Public, Array # zk_ignore
+from zkpytoolkit.stdlib.hashes.sha256.sha256 import shaRound
 
 # Initial values, FIPS 180-3, section 5.3.3
 # https://csrc.nist.gov/csrc/media/publications/fips/180/3/archive/2008-10-31/documents/fips180-3_final.pdf

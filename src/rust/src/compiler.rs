@@ -1,26 +1,139 @@
-use pyo3::prelude::*;
+use pyo3::{prelude::*, exceptions};
+use pythonize::{depythonize, pythonize};
 
 use circ::ir::{opt::Opt, opt::opt, term::Computations};
 use circ_opt::CircOpt;
 use circ::cfg::cfg;
-use zkpyc::export::write_constraints;
+use zkpyc::export::{write_constraints, prepare_prover_statements, prepare_verifier_statements};
 use zkpyc::front::{self, Mode::Proof, FrontEnd, python::Inputs};
 use zkpyc::utilities::r1cs::{ProverData, VerifierData};
+use zkpyc::utilities::proof::{serialize_into_file, deserialize_from_file};
+use zkpyc::utilities::scalar_fields::PrimeField;
+use zkpyc::utilities::wit_comp::StagedWitComp;
 use zkpyc::utilities::{opt::reduce_linearities, trans::to_r1cs};
 use zkpyc::utilities::scalar_fields::bls12_381::Bls12_381;
 use zkpyc::utilities::scalar_fields::bn256::Bn256;
 use curve25519_dalek::scalar::Scalar as Curve25519;
-use std::fs::{File, remove_file};
+use std::fs::{File, remove_file, self};
 use std::io::Write;
+use std::panic;
 use std::path::{Path, PathBuf};
 
+use crate::conversions::{vec_of_var_to_py, py_to_vec_of_var};
 use crate::ff_constants::*;
 
 // use pyo3::types::IntoPyDict;
 // use pyo3::ToPyObject;
+use pyo3::types::PyList;
 
 enum Modulus {
     Integer(rug::Integer)
+}
+
+trait ProverOrVerifier {
+    fn identifier() -> &'static str;
+    fn input_type() -> &'static str;
+    fn prepare_statements<F: PrimeField>(
+        f_name: &str,
+        module_name: &str,
+        inputs_path: &Path,
+        pk_or_vk_path: &Path,
+        zkif_workspace: &Path,
+        is_prover: bool,
+    ) -> Result<(), Box<dyn std::error::Error>>;
+}
+
+struct Prover;
+
+struct Verifier;
+
+impl ProverOrVerifier for Prover {
+    fn identifier() -> &'static str {
+        "prover"
+    }
+
+    fn input_type() -> &'static str {
+        "pin"
+    }
+
+    fn prepare_statements<F: PrimeField>(
+        f_name: &str,
+        module_name: &str,
+        inputs_path: &Path,
+        key_path: &Path,
+        zkif_workspace: &Path,
+        generate_constraints: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        prepare_prover_statements::<F>(&f_name, &inputs_path, &key_path, &zkif_workspace, generate_constraints)?;
+        let new_witness_name = format!("witness_{}_{}", module_name, f_name);
+        let new_header_name = format!("header_{}_{}", module_name, f_name);
+        let new_constraints_name = format!("constraints_{}_{}", module_name, f_name);
+        rename_zkif_file("witness", &new_witness_name, &zkif_workspace)?;
+        rename_zkif_file("header", &new_header_name, &zkif_workspace)?;
+        if generate_constraints {
+            rename_zkif_file("constraints_0", &new_constraints_name, &zkif_workspace)?;
+        }
+        Ok(())
+    }
+}
+
+impl ProverOrVerifier for Verifier {
+    fn identifier() -> &'static str {
+        "verifier"
+    }
+
+    fn input_type() -> &'static str {
+        "vin"
+    }
+
+    fn prepare_statements<F: PrimeField>(
+        f_name: &str,
+        module_name: &str,
+        inputs_path: &Path,
+        key_path: &Path,
+        zkif_workspace: &Path,
+        generate_constraints: bool,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        prepare_verifier_statements::<F>(&f_name, &inputs_path, &key_path, &zkif_workspace, generate_constraints)?;
+        let new_header_name = format!("header_{}_{}", module_name, f_name);
+        let new_constraints_name = format!("constraints_{}_{}", module_name, f_name);
+        rename_zkif_file("header", &new_header_name, &zkif_workspace)?;
+        if generate_constraints {
+            rename_zkif_file("constraints_0", &new_constraints_name, &zkif_workspace)?;
+        }
+        Ok(())
+    }
+}
+
+fn create_folder(workspace: &Path, folder_name: &str) -> PathBuf {
+    let folder_path = workspace.join(folder_name);
+
+    // Create the folder if it doesn't exist
+    if !folder_path.exists() {
+        fs::create_dir(&folder_path).expect(&format!("Failed to create folder {}", folder_name));
+    }
+
+    folder_path.to_path_buf()
+}
+
+fn rename_zkif_file(
+    file_name: &str,
+    new_name: &str,
+    workspace: &Path,
+) -> Result<(), std::io::Error> {
+    let original_path = workspace.join(format!("{}.zkif", file_name));
+    let new_file_name = format!("{}.zkif", new_name);
+    let new_path = workspace.join(new_file_name);
+
+    fs::rename(original_path, new_path)
+}
+
+fn get_current_module_name(_py: Python) -> PyResult<String> {
+    let module_name: String = _py
+        .eval("__name__", None, None)?
+        .extract()?;
+
+    Ok(module_name)
 }
 
 fn optimize_computations(cs: Computations) -> Computations {
@@ -79,12 +192,25 @@ fn init(modulus: &str) -> PyResult<()> {
 }
 
 #[pyfunction]
-#[pyo3(signature = (f_name, input))]
+#[pyo3(signature = (id=0))]
+fn cleanup(id: usize) -> PyResult<()> {
+    let workspace = create_folder(Path::new("."), &format!("preprocessing_id_{}", id));
+    Ok(fs::remove_dir_all(workspace)?)
+}
+
+#[pyfunction]
+#[pyo3(signature = (f_name, input, id=0))]
 fn compile(
+    _py: Python,
     f_name: String,
     input: String,
-) -> PyResult<usize> {
-    let file_path = Path::new(".").join(PathBuf::from(format!(".__def_{}.py", f_name)));
+    id: usize,
+) -> PyResult<(usize)> {
+    // Define directory where ZKP data will be stored
+    let workspace = create_folder(Path::new("."), &format!("preprocessing_id_{}", id));
+    
+    let module_name = get_current_module_name(_py).unwrap();
+    let file_path = Path::new(".").join(PathBuf::from(format!(".{}_{}.py", module_name, f_name)));
     let mut file = File::create(&file_path)?;
     // Because of how the compiler is written, we need to temporarily
     // store source code as a file.
@@ -96,32 +222,155 @@ fn compile(
         mode: Proof,
     };
 
+    // Run ZKPyC and catch panic or other PyErrors
+    panic::set_hook(Box::new(|_info| {
+        // do nothing
+    }));
+    let result = panic::catch_unwind(|| run_zkpyc_compiler(&f_name, inputs));
+
     // Remove temporary function definition file.
-    let (pd, vd, constr_count) = match run_zkpyc_compiler(&f_name, inputs) {
-        Ok((pd, vd, constr_count)) => {
+    let (pd, vd, constr_count) = match result {
+        Ok(Ok(res)) => {
             remove_file(&file_path)?;
-            (pd, vd, constr_count)
+            res
         }
-        Err(err) => {
+        Ok(Err(err)) => {
             remove_file(&file_path)?;
             return Err(err);
-        },
+        }
+        Err(panic_payload) => {
+            // Try to extract the panic message from the payload
+            let panic_msg = if let Some(msg) = panic_payload.downcast_ref::<&str>() {
+                msg.to_string()
+            } else if let Some(msg) = panic_payload.downcast_ref::<String>() {
+                msg.clone()
+            } else {
+                "Unknown panic message".to_string()
+            };
+
+            // Return the panic message as a Python error
+            // return Err(PyErr::new::<exc::RuntimeError, _>(_py, panic_msg));
+            return Err(exceptions::PySyntaxError::new_err(panic_msg));
+        }
     };
 
+    let zkif_workspace = create_folder(&workspace, "zkif_export");
     match Modulus::Integer(cfg().field().modulus().clone()) {
-        Modulus::Integer(i) if i == get_bls12_381_const() => write_constraints::<Bls12_381>(&pd.r1cs, &f_name),
-        Modulus::Integer(i) if i == get_bn256_const() => write_constraints::<Bn256>(&pd.r1cs, &f_name),
-        Modulus::Integer(i) if i == get_curve25519_const() => write_constraints::<Curve25519>(&pd.r1cs, &f_name),
+        Modulus::Integer(i) if i == get_bls12_381_const() => write_constraints::<Bls12_381>(&pd.r1cs, &f_name, &zkif_workspace),
+        Modulus::Integer(i) if i == get_bn256_const() => write_constraints::<Bn256>(&pd.r1cs, &f_name, &zkif_workspace),
+        Modulus::Integer(i) if i == get_curve25519_const() => write_constraints::<Curve25519>(&pd.r1cs, &f_name, &zkif_workspace),
         _ => panic!("Prime field modulus not supported. The currently supported scalar fields are those of the BLS12_381, BN256 and Curve25519 curves."),
-    }
+    }.map_err(|err| {
+        exceptions::PyRuntimeError::new_err(format!("An error occurred: {}", err))
+    })?;
 
+    // Change the zkif name to contain information about the module and function name.
+    let new_constraints_name = format!("constraints_{}_{}", module_name, f_name);
+    let new_header_name = format!("header_{}_{}", module_name, f_name);
+    rename_zkif_file("constraints_0", &new_constraints_name, &zkif_workspace)?;
+    rename_zkif_file("header", &new_header_name, &zkif_workspace)?;
+
+
+    let zkp_keys_workspace = create_folder(&workspace, "zkp_keys");
+    let pk_path = zkp_keys_workspace.join(format!("{}_{}_prover_key.dat", module_name, f_name));
+    let vk_path = zkp_keys_workspace.join(format!("{}_{}_verifier_key.dat", module_name, f_name));
+
+    serialize_into_file(&pd, pk_path)?;
+    serialize_into_file(&vd, vk_path)?;
+    
     Ok(constr_count)
 }
 
+fn setup_proof_or_verification<PV: ProverOrVerifier>(
+    _py: Python,
+    f_name: String,
+    input: String,
+    module: Option<String>,
+    id: usize,
+) -> PyResult<()> {
+    let module_name: String;
+    let workspace = create_folder(Path::new("."), &format!("preprocessing_id_{}", id));
+    let zkif_workspace = create_folder(&workspace, "zkif_export");
+    let zkp_keys_workspace = create_folder(&workspace, "zkp_keys");
+
+    if module.is_none() {
+        module_name = get_current_module_name(_py).unwrap();
+    } else {
+        module_name = module.unwrap();
+    }
+
+    let identifier = PV::identifier();
+    let pk_or_vk_path = zkp_keys_workspace.join(format!("{}_{}_{}_key.dat", module_name, f_name, identifier));
+    let inputs_path = Path::new(".").join(PathBuf::from(format!(".{}_{}.py.{}", module_name, f_name, PV::input_type())));
+    let mut file = File::create(&inputs_path)?;
+    file.write_all(input.as_bytes())?;
+
+    // Run verifier or proof statement setup and catch panic or other PyErrors
+    panic::set_hook(Box::new(|_info| {}));
+
+    let result = panic::catch_unwind(|| {
+        match Modulus::Integer(cfg().field().modulus().clone()) {
+            Modulus::Integer(i) if i == get_bls12_381_const() => PV::prepare_statements::<Bls12_381>(&f_name, &module_name, &inputs_path, &pk_or_vk_path, &zkif_workspace, false),
+            Modulus::Integer(i) if i == get_bn256_const() => PV::prepare_statements::<Bn256>(&f_name, &module_name, &inputs_path, &pk_or_vk_path, &zkif_workspace, false),
+            Modulus::Integer(i) if i == get_curve25519_const() => PV::prepare_statements::<Curve25519>(&f_name, &module_name, &inputs_path, &pk_or_vk_path, &zkif_workspace, false),
+            _ => panic!("Prime field modulus not supported. The currently supported scalar fields are those of the BLS12_381, BN256 and Curve25519 curves."),
+        }.map_err(|err| {
+            exceptions::PyRuntimeError::new_err(format!("An error occurred: {}", err))
+        })
+    });
+
+    match result {
+        Ok(Ok(_)) => {
+            remove_file(&inputs_path)?;
+            Ok(())
+        }
+        Ok(Err(err)) => {
+            remove_file(&inputs_path)?;
+            Err(err)
+        }
+        Err(panic_payload) => {
+            let panic_msg = if let Some(msg) = panic_payload.downcast_ref::<&str>() {
+                msg.to_string()
+            } else if let Some(msg) = panic_payload.downcast_ref::<String>() {
+                msg.clone()
+            } else {
+                "Unknown panic message".to_string()
+            };
+            Err(exceptions::PySyntaxError::new_err(panic_msg))
+        }
+    }
+}
+
+#[pyfunction]
+#[pyo3(signature = (f_name, input, module=None, id=0))]
+fn setup_proof(
+    _py: Python,
+    f_name: String,
+    input: String,
+    module: Option<String>,
+    id: usize,
+) -> PyResult<()> {
+    setup_proof_or_verification::<Prover>(_py, f_name, input, module, id)
+}
+
+#[pyfunction]
+#[pyo3(signature = (f_name, input, module=None, id=0))]
+fn setup_verification(
+    _py: Python,
+    f_name: String,
+    input: String,
+    module: Option<String>,
+    id: usize,
+) -> PyResult<()> {
+    setup_proof_or_verification::<Verifier>(_py, f_name, input, module, id)
+}
 
 pub(crate) fn create_submodule(py: pyo3::Python<'_>) -> pyo3::PyResult<&pyo3::prelude::PyModule> {
     let submod = pyo3::prelude::PyModule::new(py, "compiler")?;
     submod.add_function(pyo3::wrap_pyfunction!(init, submod)?)?;
     submod.add_function(pyo3::wrap_pyfunction!(compile, submod)?)?;
+    submod.add_function(pyo3::wrap_pyfunction!(cleanup, submod)?)?;
+    submod.add_function(pyo3::wrap_pyfunction!(setup_proof, submod)?)?;
+    submod.add_function(pyo3::wrap_pyfunction!(setup_verification, submod)?)?;
     Ok(submod)
 }

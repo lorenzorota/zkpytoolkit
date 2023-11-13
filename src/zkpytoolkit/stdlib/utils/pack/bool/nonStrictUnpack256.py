@@ -1,4 +1,4 @@
-from zk_types.types import Array, field # zk_ignore
+from zkpytoolkit.types import Array, field # zk_ignore
 from .unpack254_unchecked import main as unpack_unchecked
 
 # Unpack a field element as 256 big-endian bits

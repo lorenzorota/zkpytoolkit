@@ -3,8 +3,6 @@ requires = [
     # First version of setuptools to support pyproject.toml configuration
     "setuptools>=61.0.0",
     "wheel",
-    # Must be kept in sync with `project.dependencies`
-    "cffi>=1.12; platform_python_implementation != 'PyPy'",
     "setuptools-rust>=1.7.0",
 ]
 build-backend = "setuptools.build_meta"
@@ -19,10 +17,8 @@ description = "Zero-knowledge proof toolkit for verifiable computing."
 readme = "README.md"
 license = {text = "Apache-2.0 OR BSD-3-Clause"}
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
-    "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX",
@@ -45,7 +41,8 @@ classifiers = [
 requires-python = ">=3.7"
 dependencies = [
     # Must be kept in sync with `build-system.requires`
-    "cffi >=1.12",
+    "mpyc >=0.9",
+    "gmpy2 >= 2.0",
 ]
 
 #[project.urls]
@@ -77,20 +74,6 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_unused_configs = true
 strict_equality = true
-
-# [[tool.mypy.overrides]]
-# module = [
-#     "pretend"
-# ]
-# ignore_missing_imports = true
-
-# [tool.coverage.run]
-# branch = true
-# relative_files = true
-# source = [
-#     "cryptography",
-#     "tests/",
-# ]
 
 # [tool.check-sdist]
 # git-only = [

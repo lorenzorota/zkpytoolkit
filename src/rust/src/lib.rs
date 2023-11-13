@@ -1,5 +1,6 @@
 mod compiler;
 mod ff_constants;
+mod conversions;
 
 use pyo3::prelude::*;
 

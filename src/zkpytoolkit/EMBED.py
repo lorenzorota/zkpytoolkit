@@ -1,5 +1,5 @@
 
-from zk_types.types import Array, field # zk_ignore
+from zkpytoolkit.types import Array, field # zk_ignore
 from typing import Any, List #zk_ignore
 
 # These functions are not run by ZKPyC as they are handled internally.

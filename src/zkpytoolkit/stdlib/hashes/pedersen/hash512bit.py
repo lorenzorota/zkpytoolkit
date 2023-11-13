@@ -1,8 +1,8 @@
-from zk_types.types import Array # zk_ignore
+from zkpytoolkit.types import Array # zk_ignore
 # from .hash512bitBool import main as pedersen
 from .hash512bitBool_jubjub import main as pedersen
-from utils.casts.int_to_bits import main as to_bits
-from utils.casts.int_from_bits import main as from_bits
+from zkpytoolkit.stdlib.utils.casts.int_to_bits import main as to_bits
+from zkpytoolkit.stdlib.utils.casts.int_from_bits import main as from_bits
 
 def main(inputs: Array[int, 16]) -> Array[int, 8]:
 	e: Array[bool, 512] = [

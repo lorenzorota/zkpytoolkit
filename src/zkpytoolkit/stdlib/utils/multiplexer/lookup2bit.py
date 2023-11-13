@@ -1,4 +1,4 @@
-from zk_types.types import Array, field # zk_ignore
+from zkpytoolkit.types import Array, field # zk_ignore
 
 # Two-bit window lookup table using one constraint
 # Maps the bits `b` to a list of field elements `c`

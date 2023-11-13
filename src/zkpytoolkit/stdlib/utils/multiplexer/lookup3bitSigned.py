@@ -1,4 +1,4 @@
-from zk_types.types import Array, field # zk_ignore
+from zkpytoolkit.types import Array, field # zk_ignore
 from .lookup2bit import main as lookup
 
 # Three-bit window lookup (2bits + signature bit) in 2bit table

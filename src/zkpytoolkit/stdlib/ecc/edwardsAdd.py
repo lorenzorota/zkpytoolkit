@@ -5,10 +5,10 @@ from zkpytoolkit.stdlib.ecc.edwardsParams import EdwardsParams
 # Add two points on a twisted Edwards curve
 # Curve parameters are defined with the last argument
 # https://en.wikipedia.org/wiki/Twisted_Edwards_curve#Addition_on_twisted_Edwards_curves
-def main(pt1: Array[field, 2], pt2: Array[field, 2], context: EdwardsParams) -> Array[field, 2]:
+def add(pt1: Array[field, 2], pt2: Array[field, 2], params: EdwardsParams) -> Array[field, 2]:
 
-    a: field = context.EDWARDS_A
-    d: field = context.EDWARDS_D
+    a: field = params.EDWARDS_A
+    d: field = params.EDWARDS_D
 
     u1: field = pt1[0]
     v1: field = pt1[1]

@@ -9,8 +9,6 @@ class EdwardsParams:
 	EDWARDS_C: field
 	EDWARDS_A: field
 	EDWARDS_D: field
-	MONT_A: field
-	MONT_B: field
 	INFINITY: Array[field, 2]
-	Gu: field
-	Gv: field
+	G: Array[field, 2]
+	H: Array[field, 2]

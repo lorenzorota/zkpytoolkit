@@ -26,7 +26,7 @@ def mix(state: Array[field, 7], m: Array[Array[field, 7], 7]) -> Array[field, 7]
     return out
 
 # let N = 6 for now
-def main(inputs: Array[field, 6]) -> field:
+def poseidon(inputs: Array[field, 6]) -> field:
     # assert(N > 0 && N <= 6); // max 6 inputs
 
     # t: int = 6 + 1

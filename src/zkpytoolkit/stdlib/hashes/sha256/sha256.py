@@ -11,7 +11,7 @@ IV: Array[int, 8] = [
 # A function that takes N u32[16] array as inputs, concatenates them,
 # and returns their sha256 compression as a u32[8].
 # Note: no padding is applied
-def sha256(a: Array[Array[int, 16], 1], N: int) -> Array[int, 8]:
+def hash(a: Array[Array[int, 16], 1], N: int) -> Array[int, 8]:
 	current: Array[int, 8] = IV
 
 	for i in range(0, N):

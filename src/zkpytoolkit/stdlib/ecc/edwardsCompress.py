@@ -1,9 +1,9 @@
 from zkpytoolkit.types import Array, field # zk_ignore
-from zkpytoolkit.stdlib.utils.pack.bool.nonStrictUnpack256 import main as unpack256
+from zkpytoolkit.stdlib.utils.pack.bool.nonStrictUnpack256 import unpack256
 
 # Compress JubJub Curve Point to 256bit array using big endianness bit order
 
-def main(pt: Array[field, 2])  -> Array[bool, 256]:
+def edwardsCompress(pt: Array[field, 2])  -> Array[bool, 256]:
     x: field = pt[0]
     y: field = pt[1]
 

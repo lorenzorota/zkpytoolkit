@@ -1,4 +1,4 @@
-from zkpytoolkit.types import Array, field # zk_ignore
+from zkpytoolkit.types import field # zk_ignore
 from zkpytoolkit.stdlib.ecc.edwardsParams import EdwardsParams
 
 BABYJUBJUB_PARAMS: EdwardsParams = EdwardsParams(
@@ -7,16 +7,16 @@ BABYJUBJUB_PARAMS: EdwardsParams = EdwardsParams(
     EDWARDS_A=field(168700), # Coefficient A
     EDWARDS_D=field(168696), # Coefficient D
 
-    # Montgomery parameters
-    MONT_A=field(168698),
-    MONT_B=field(1),
-
     # Point at infinity
     INFINITY=[field(0), field(1)],
 
-    # Generator
-    Gu=field(16540640123574156134436876038791482806971768689494387082833631921987005038935),
-    Gv=field(20819045374670962167435360035096875258406992893633759881276124905556507972311)
+    # Generator G
+    G = [field(11778354283853556721794590258969052240776923358153575479091595289104208260815),
+         field(4660165575422235542129689514131904223884146628289478588697434946795487697708)],
+
+    # Generator H
+    H = [field(18178821955276657859300688684765306517392358897702982666727346170646376373380),
+         field(20343343967649314197717258655334499551537074004585442203606038993457854172628)]
 )
 
 def main() -> EdwardsParams:

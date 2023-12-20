@@ -1,6 +1,7 @@
 
 from zkpytoolkit.types import Array, field # zk_ignore
-from typing import Any, List #zk_ignore
+from typing import Union, Any, List #zk_ignore
+from math import floor, log2 #zk_ignore
 
 # These functions are not run by ZKPyC as they are handled internally.
 # They do however need to be defined for the python runtime.
@@ -24,7 +25,7 @@ def int_from_bits(bits: Array[bool, Any]) -> int:
 
 
 def unpack(i: field, N: int) -> Array[bool, Any]:
-    num = field.modulus + int(i) if int(i) < 0 else int(i)
+    num = field.modulus + int(i) if int(i) < 0 else int(i) # type: ignore
     bits = [bool(int(digit)) for digit in bin(num)[2:]]
     length = len(bits)
     if length < N:
@@ -33,3 +34,24 @@ def unpack(i: field, N: int) -> Array[bool, Any]:
         return bits # type: ignore
     else:
         return bits[-N:] # type: ignore
+
+
+def pack(i) -> field:
+    field_size = get_field_size()
+    if len(i) > field_size:
+        raise ValueError("Input length must be less than field modulus size")
+
+    padded_i = [False] * (field_size - len(i)) + i
+    num = int("".join(map(str, map(int, padded_i))), 2)
+    original_value = num - field.modulus if num >= field.modulus else num # type: ignore
+
+    return field(original_value) # type: ignore
+
+
+def get_field_size() -> int:
+    return floor(log2(field.modulus)) + 1 # type: ignore
+
+
+sum_ = sum # zk_ignore
+def sum(x: Array[Union[int, field], Any]) -> Union[int, field]:
+    return sum_(x) # type: ignore

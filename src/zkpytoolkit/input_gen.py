@@ -188,7 +188,7 @@ def get_class_source_code(cls, field_tmp):
 # def params_to_string(params, field_tmp):
 #     return convert_literals(params, type(params), field_tmp)
 
-def represent_object(obj, alias=None, field_tmp=None, global_vars=None):
+def represent_object(obj, alias=None, field_tmp=None, current_module="__main__", global_vars=None):
     module = inspect.getmodule(obj)
     if module is None:
         module_name = None
@@ -200,7 +200,7 @@ def represent_object(obj, alias=None, field_tmp=None, global_vars=None):
         # If the object is a module, just return the import statement for the module
         return f"import {module_name}"
     # check if object is locally implemented function
-    elif inspect.isfunction(obj) and module_name == "__main__" and module_name is not None:
+    elif inspect.isfunction(obj) and module_name == current_module:
         # If the object is a function, return its implementation
         source_lines, _ = inspect.getsourcelines(obj)
         function_impl = ''.join(source_lines)
@@ -212,7 +212,7 @@ def represent_object(obj, alias=None, field_tmp=None, global_vars=None):
         obj_repr = str_repr(obj, obj_variable_name, field_tmp)
         return obj_repr
     # check if object is locally defined class
-    elif inspect.isclass(obj.__class__) and obj.__class__.__name__ != 'function' and module_name == '__main__':
+    elif inspect.isclass(obj.__class__) and obj.__class__.__name__ != 'function' and module_name == current_module:
         class_impl = get_class_source_code(obj, field_tmp)
         return '\n' + class_impl
     # check if object is imported class instance
@@ -238,17 +238,17 @@ def represent_object(obj, alias=None, field_tmp=None, global_vars=None):
             import_statement = f"from {module_name} import {obj_name} as {alias}"
         return import_statement
 
-def process_includes(obj_list, field_tmp, global_vars=None):
+def process_includes(obj_list, field_tmp, current_module, global_vars=None):
     result = []
     
     for item in obj_list:
         if isinstance(item, tuple):
             # If item is a pair, pass it as (obj, alias) to parse_include
             obj, alias = item
-            result.append(represent_object(obj, alias, field_tmp, global_vars))
+            result.append(represent_object(obj, alias, field_tmp, current_module, global_vars))
         else:
             # If item is not a pair, pass it as obj to parse_include
-            result.append(represent_object(item, field_tmp=field_tmp, global_vars=global_vars))
+            result.append(represent_object(item, None, field_tmp, current_module, global_vars))
     
     # Concatenate the results with a newline in between
     return '\n'.join(result)

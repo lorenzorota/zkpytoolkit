@@ -1,6 +1,5 @@
-use pyo3::{Python, types::{PyList, PyTuple}, PyResult, exceptions, PyObject};
-use pythonize::{depythonize, pythonize};
-use zkpyc::utilities::{r1cs::{Var, VarType, ProverData}, wit_comp::StagedWitComp};
+use pyo3::{Python, types::{PyList, PyTuple}, PyResult, exceptions};
+use zkpyc::utilities::r1cs::{Var, VarType};
 
 // Function to convert Vec<Var> to Python object
 pub fn vec_of_var_to_py(py: Python, input: Vec<Var>) -> &PyList {
@@ -22,7 +21,7 @@ pub fn vec_of_var_to_py(py: Python, input: Vec<Var>) -> &PyList {
 }
 
 // Function to convert PyList to Vec<Var>
-pub fn py_to_vec_of_var(py: Python, input: &PyList) -> PyResult<Vec<Var>> {
+pub fn py_to_vec_of_var(_py: Python, input: &PyList) -> PyResult<Vec<Var>> {
     let mut result = Vec::new();
 
     for item in input.iter() {

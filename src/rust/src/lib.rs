@@ -1,4 +1,6 @@
+mod utilities;
 mod compiler;
+mod backend;
 mod ff_constants;
 mod conversions;
 
@@ -11,5 +13,6 @@ use pyo3::prelude::*;
 fn _rust(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // m.add_function(wrap_pyfunction!(sum_as_string, m)?)?;
     m.add_submodule(compiler::create_submodule(py)?)?;
+    m.add_submodule(backend::create_submodule(py)?)?;
     Ok(())
 }

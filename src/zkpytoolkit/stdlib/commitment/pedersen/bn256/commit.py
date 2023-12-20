@@ -7,8 +7,10 @@ from zkpytoolkit.stdlib.ecc.babyjubjubParams import BABYJUBJUB_PARAMS
 from zkpytoolkit.stdlib.commitment.pedersen.bn256.hash512bitBool import pedersen_no_compress
 from zkpytoolkit.stdlib.hashes.pedersen.bn256.generators import G_table
 from zkpytoolkit.stdlib.hashes.pedersen.bn256.generators import H_table
+from zkpytoolkit.EMBED import unpack
+from zkpytoolkit.EMBED import get_field_size
 
-def commit(x: Array[int, 16], r: Array[int, 16]) -> Array[int, 8]:
+def commit_int(x: Array[int, 16], r: Array[int, 16]) -> Array[int, 8]:
     x_bool: Array[bool, 512] = [
         *to_bits(x[0]),
         *to_bits(x[1]),
@@ -45,6 +47,33 @@ def commit(x: Array[int, 16], r: Array[int, 16]) -> Array[int, 8]:
         *to_bits(r[13]),
         *to_bits(r[14]),
         *to_bits(r[15])
+    ]
+
+    input_hash: Array[field, 2] = pedersen_no_compress(x_bool, G_table)
+    blinding_hash: Array[field, 2] = pedersen_no_compress(r_bool, H_table)
+    commitment:  Array[bool, 256] = edwardsCompress(add(input_hash, blinding_hash, BABYJUBJUB_PARAMS))
+
+    return [
+        from_bits(commitment[0:32]),
+        from_bits(commitment[32:64]),
+        from_bits(commitment[64:96]),
+        from_bits(commitment[96:128]),
+        from_bits(commitment[128:160]),
+        from_bits(commitment[160:192]),
+        from_bits(commitment[192:224]),
+        from_bits(commitment[224:256])
+    ]
+
+def commit_field(x: field, r: Array[field, 2]) -> Array[int, 8]:
+    x_bool: Array[bool, 512] = [
+        *unpack(x, get_field_size()),
+        *[False for _ in range(512 - get_field_size())]
+    ]
+
+    r_bool: Array[bool, 512] = [
+        *unpack(r[0], get_field_size()),
+        *unpack(r[1], get_field_size()),
+        *[False for _ in range(512 - 2*get_field_size())]
     ]
 
     input_hash: Array[field, 2] = pedersen_no_compress(x_bool, G_table)

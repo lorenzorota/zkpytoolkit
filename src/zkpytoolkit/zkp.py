@@ -22,17 +22,17 @@ class ZKP:
             raise RuntimeError("Only one instance of the ZKP class is allowed.")
         return cls._instance
 
-    def compile(self, func, includes=None, global_vars=None):
+    def compile(self, func, includes=None, global_vars=None, local_vars=None):
         # Get the function implementation and name
-        func_impl = represent_object(func, current_module=self.module)
+        func_impl = represent_object(func, current_module=self.module, is_entry_fct=True)
         func_name = func.__name__
 
         # Get the processed objects
         if includes is None:
             obj_impl = ""
         else:
-            obj_impl = process_includes(includes, self.field, self.module, global_vars)
-        
+            obj_impl = process_includes(includes, self.field, self.module, global_vars, local_vars)
+
         # Concatenate the function definition and processed objects
         code = f"{obj_impl}{func_impl}"
         # print(code)

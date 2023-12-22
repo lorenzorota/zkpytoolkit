@@ -1,6 +1,5 @@
 from typing import NewType, TypeVar, Generic, Any
-import mpyc
-from mpyc.runtime import mpc
+from mpyc import finfields
 
 T = TypeVar('T', bound=Any)
 N = TypeVar('N')
@@ -14,13 +13,13 @@ field = None
 def _set_modulus(value):
     global field
     if value == "bn256" or value == bn256_scalar_field_modulus:
-        field = mpyc.finfields.GF(bn256_scalar_field_modulus)
+        field = finfields.GF(bn256_scalar_field_modulus)
         return field
     elif value == "bls12_381" or value == bls12_381_scalar_field_modulus or value is None:
-        field = mpyc.finfields.GF(bls12_381_scalar_field_modulus)
+        field = finfields.GF(bls12_381_scalar_field_modulus)
         return field
     elif value == "curve25519" or value == curve25519_scalar_field_modulus:
-        field = mpyc.finfields.GF(curve25519_scalar_field_modulus)
+        field = finfields.GF(curve25519_scalar_field_modulus)
         return field
     else:
         raise ValueError("The only supported scalar fields are those of the following curves: bn256, bls12_381, curve25519.")

@@ -114,10 +114,15 @@ def prepare_verifier_inputs(argument_names, argument_types, return_type, modulus
 
     return lisp_code
 
-def get_variable_name(obj, global_vars):
+def get_variable_name(obj, global_vars, local_vars):
     if global_vars is None:
         global_vars = globals()
+    if local_vars is None:
+        local_vars = locals()
     for name, value in global_vars.items():
+        if value is obj:
+            return name
+    for name, value in local_vars.items():
         if value is obj:
             return name
     return None
@@ -188,27 +193,27 @@ def get_class_source_code(cls, field_tmp):
 # def params_to_string(params, field_tmp):
 #     return convert_literals(params, type(params), field_tmp)
 
-def represent_object(obj, alias=None, field_tmp=None, current_module="__main__", global_vars=None):
+def represent_object(obj, alias=None, field_tmp=None, current_module="__main__", global_vars=None, local_vars=None, is_entry_fct=False):
     module = inspect.getmodule(obj)
     if module is None:
         module_name = None
     else:
         module_name = module.__name__
-    
+
     # check if object is imported module
     if hasattr(obj, '__class__') and obj.__class__.__name__ == 'module' and module_name is not None:
         # If the object is a module, just return the import statement for the module
         return f"import {module_name}"
-    # check if object is locally implemented function
-    elif inspect.isfunction(obj) and module_name == current_module:
+    # check if object is locally implemented function or entry function
+    elif inspect.isfunction(obj) and (module_name == current_module or is_entry_fct):
         # If the object is a function, return its implementation
         source_lines, _ = inspect.getsourcelines(obj)
         function_impl = ''.join(source_lines)
         return '\n' + function_impl
-    # check if object is a list
-    elif isinstance(obj, list):
+    # check if object is a list, int, bool or field
+    elif isinstance(obj, list) or isinstance(obj, int) or isinstance(obj, bool) or type(obj) is field_tmp:
         # If the object is a list, return its string representation
-        obj_variable_name = get_variable_name(obj, global_vars)
+        obj_variable_name = get_variable_name(obj, global_vars, local_vars)
         obj_repr = str_repr(obj, obj_variable_name, field_tmp)
         return obj_repr
     # check if object is locally defined class
@@ -217,7 +222,7 @@ def represent_object(obj, alias=None, field_tmp=None, current_module="__main__",
         return '\n' + class_impl
     # check if object is imported class instance
     elif inspect.isclass(obj.__class__) and obj.__class__.__name__ != 'function' and module_name is not None:
-        class_variable_name = get_variable_name(obj, global_vars)
+        class_variable_name = get_variable_name(obj, global_vars, local_vars)
         class_name = obj.__class__.__name__
         obj_repr = str_repr(obj, class_variable_name, field_tmp)
         # If the object is a class, return an import statement for the class
@@ -225,11 +230,10 @@ def represent_object(obj, alias=None, field_tmp=None, current_module="__main__",
             class_import_statement = f"from {module_name} import {class_name}\n\n{obj_repr}"
         else:
             class_import_statement = f"from {module_name} import {class_name} as {alias}\n\n{obj_repr}"
-
         return class_import_statement
     if module_name is not None:
         obj_name = obj.__name__ if hasattr(obj, '__name__') else str(obj)
-        alias = get_variable_name(obj, global_vars)
+        alias = get_variable_name(obj, global_vars, local_vars)
         if obj_name == alias:
             # If obj_name is the same as alias, use a simple import statement
             import_statement = f"from {module_name} import {obj_name}"
@@ -238,17 +242,17 @@ def represent_object(obj, alias=None, field_tmp=None, current_module="__main__",
             import_statement = f"from {module_name} import {obj_name} as {alias}"
         return import_statement
 
-def process_includes(obj_list, field_tmp, current_module, global_vars=None):
+def process_includes(obj_list, field_tmp, current_module, global_vars=None, local_vars=None):
     result = []
     
     for item in obj_list:
         if isinstance(item, tuple):
             # If item is a pair, pass it as (obj, alias) to parse_include
             obj, alias = item
-            result.append(represent_object(obj, alias, field_tmp, current_module, global_vars))
+            result.append(represent_object(obj, alias, field_tmp, current_module, global_vars, local_vars))
         else:
             # If item is not a pair, pass it as obj to parse_include
-            result.append(represent_object(item, None, field_tmp, current_module, global_vars))
+            result.append(represent_object(item, None, field_tmp, current_module, global_vars, local_vars))
     
     # Concatenate the results with a newline in between
     return '\n'.join(result)

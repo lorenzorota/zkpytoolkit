@@ -11,35 +11,7 @@ from collections import namedtuple
 from .field import FQ, inv, field_modulus
 from .numbertheory import square_root_mod_prime, SquareRootError
 
-# For JubJub
-# # order of the field
-# PARAM_Q = field_modulus
-# # order of the curve
-# PARAM_E = 52435875175126190479447740508185965837647370126978538250922873299137466033592
-# PARAM_C = 8  # Cofactor
-# PARAM_L = PARAM_E // PARAM_C  # C*L == E
-# PARAM_A = 52435875175126190479447740508185965837690552500527637822603658699938581184512  # Coefficient A
-# PARAM_D = 19257038036680949359750312669786877991949435402254120286184196891950884077233  # Coefficient D
-
-# For BabyJubJub
-# # order of the field
-# PARAM_Q = field_modulus
-# # order of the curve
-# PARAM_E = 21888242871839275222246405745257275088614511777268538073601725287587578984328
-# PARAM_C = 8  # Cofactor
-# PARAM_L = PARAM_E // PARAM_C  # C*L == E
-# PARAM_A = 168700  # Coefficient A
-# PARAM_D = 168696  # Coefficient D
-
-# For Doppio
-# order of the field
-PARAM_Q = field_modulus
-# order of the curve
-PARAM_E = 7237005577332262213973186563042994240793386170426921315009648928286698145284
-PARAM_C = 4  # Cofactor
-PARAM_L = PARAM_E // PARAM_C  # C*L == E
-PARAM_A = 1  # Coefficient A
-PARAM_D = 7237005577332262213973186563042994240857116359379907606001950938285454187918  # Coefficient D
+from .config import PARAM_Q, PARAM_E, PARAM_C, PARAM_L, PARAM_A, PARAM_D
 
 
 def is_negative(v):

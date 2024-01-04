@@ -56,12 +56,12 @@ class PedersenHasher(object):
             table.append(row)
         return table
 
-    def __gen_generators(self):
+    def __gen_generators(self, c=63):
 
         name = self.name
         segments = self.segments
         generators = []
-        c = 62
+        # c = 62
         for j in range(0, segments):
             # 63 is for jubjub, 62 is for babyJubJub and doppio (see zCash spec. 5.4.1.7)
             if j % c == 0:
@@ -75,12 +75,12 @@ class PedersenHasher(object):
             generators.append(current)
         return generators
 
-    def __hash_windows(self, windows, witness):
+    def __hash_windows(self, windows, witness, c):
 
         if self.is_sized == False:
             self.segments = len(windows)
             self.is_sized = True
-            self.generators = self.__gen_generators()
+            self.generators = self.__gen_generators(c)
 
         segments = self.segments
         assert (
@@ -108,16 +108,16 @@ class PedersenHasher(object):
             result += segment
         return result
 
-    def hash_bits(self, bits, witness=False):
+    def hash_bits(self, bits, c, witness=False):
         # Split into 3 bit windows
         if isinstance(bits, bitstring.BitArray):
             bits = bits.bin
         windows = [int(bits[i : i + 3][::-1], 2) for i in range(0, len(bits), 3)]
         assert len(windows) > 0
 
-        return self.__hash_windows(windows, witness)
+        return self.__hash_windows(windows, witness, c)
 
-    def hash_bytes(self, data, witness=False):
+    def hash_bytes(self, data, c, witness=False):
         """
         Hashes a sequence of bits (the message) into a point.
 
@@ -131,9 +131,9 @@ class PedersenHasher(object):
         # Decode bytes to octets of binary bits
         bits = "".join([bin(_)[2:].rjust(8, "0") for _ in data])
 
-        return self.hash_bits(bits, witness)
+        return self.hash_bits(bits, c, witness)
 
-    def hash_scalars(self, *scalars, witness=False):
+    def hash_scalars(self, c, *scalars, witness=False):
         """
         Calculates a pedersen hash of scalars in the same way that zCash
         is doing it according to: ... of their spec.
@@ -161,16 +161,16 @@ class PedersenHasher(object):
         for _, s in enumerate(scalars):
             windows += list((s >> i) & 0b111 for i in range(0, s.bit_length(), 3))
 
-        return self.__hash_windows(windows, witness)
+        return self.__hash_windows(windows, witness, c)
 
-    def gen_dsl_witness_bits(self, bits):
-        return self.hash_bits(bits, witness=True)
+    def gen_dsl_witness_bits(self, bits, c):
+        return self.hash_bits(bits, c, witness=True)
 
-    def gen_dsl_witness_bytes(self, data):
-        return self.hash_bytes(data, witness=True)
+    def gen_dsl_witness_bytes(self, data, c):
+        return self.hash_bytes(data, c, witness=True)
 
-    def gen_dsl_witness_scalars(self, *scalars):
-        return self.hash_scalars(*scalars, witness=True)
+    def gen_dsl_witness_scalars(self, c, *scalars):
+        return self.hash_scalars(c, *scalars, witness=True)
 
     def __gen_dsl_code(self):
         

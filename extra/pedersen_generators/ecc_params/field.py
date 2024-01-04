@@ -8,16 +8,7 @@ All changes from our side are denoted with #CHANGE.
 from __future__ import absolute_import
 
 from typing import cast, List, Tuple, Sequence, Union
-
-
-# The prime field modulus of bn256
-# field_modulus = 21888242871839275222246405745257275088548364400416034343698204186575808495617
-
-# The prime field modulus of bls12_381
-# field_modulus = 52435875175126190479447740508185965837690552500527637822603658699938581184513
-
-# The prime field modulus of ristretto255
-field_modulus = 7237005577332262213973186563042994240857116359379907606001950938285454250989
+from .config import PARAM_Q as field_modulus
 
 
 # CHANGE: Changing the modulus to the embedded curve

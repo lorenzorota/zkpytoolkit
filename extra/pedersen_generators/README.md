@@ -22,4 +22,4 @@ This will produce the source code defining two lookup tables from uncorrelated g
 
 ## Customizing Parameters
 
-To generate tables for other curves, simply modify the parameters in `run.py` according to the elliptic curve in Weierstrass form.
+To generate tables for other curves, simply modify the parameters of the Edwards curve in `run.py`.

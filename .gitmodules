@@ -1,3 +1,0 @@
-[submodule "src/rust/zkpyc"]
-	path = src/rust/zkpyc
-	url = git@github.com:lorenzorota/zkpyc.git

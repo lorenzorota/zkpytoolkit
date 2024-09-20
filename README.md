@@ -6,7 +6,7 @@ ZKPyToolkit is a comprehensive toolkit designed for creating and evaluating Zero
 
 ## Features
 
-* Python Compatibility: ZKPyToolkit supports Python functions up to version 3.10.
+* Python Compatibility: ZKPyToolkit is compatible with Python 3.10.
 
 * Compiler Integration: The ZKPyToolkit front-end relies on the [ZKPyC](https://github.com/lorenzorota/zkpyc) compiler, requiring a stable Rust compiler.
 
@@ -16,6 +16,9 @@ ZKPyToolkit is a comprehensive toolkit designed for creating and evaluating Zero
     | :---: | :---: | :---: |
     | [Bellman](https://github.com/QED-it/zkinterface-bellman) | Groth16 | bls12_381 |
     | [Dalek](https://github.com/QED-it/bulletproofs) | Bulletproofs | ristretto255 |
+
+> **Important:** This software is a proof-of-concept and has not been audited. It is highly experimental and currently deemed unstable. Use with caution.
+
 
 ## Installation
 
@@ -27,7 +30,7 @@ pip install .
 
 ## Usage
 
-To use ZKPyToolkit, instantiate a ZKP instance from `zkpytoolkit.ZKP` with the required parameter `modulus` and optionally `backend` for the proving system, and `id` for bookkeeping. Only after instantiation can you import the ZKPyToolkit types. Here's an example:
+ZKPyToolkit can only be used in _script_ mode as well as through the interactive mode provided by the IPython shell or JupyterLab. To use ZKPyToolkit, instantiate a ZKP instance from `zkpytoolkit.ZKP` with the required parameter `modulus` and optionally `backend` for the proving system, and `id` for bookkeeping. Only after instantiation can you import the ZKPyToolkit types. Here's an example:
 
 ```python
 from zkpytoolkit import ZKP
@@ -43,45 +46,50 @@ For a concrete example, you are refered to the `/notebooks/zkpytoolkit_demo.ipyn
 
 ## Standard Library
 
-The standard library (stdlib), greatly inspired by the [ZoKrates Standard Library](https://zokrates.github.io/toolbox/stdlib.html), provides built-in Python friendly ZKP gadgets, accessible via the submodule `zkpytoolkit.stdlib`. These consist of:
+The standard library (stdlib), is a migration of the [ZoKrates Standard Library](https://zokrates.github.io/toolbox/stdlib.html) to Python, providing a range of Python-friendly ZKP gadgets, accessible via the submodule `zkpytoolkit.stdlib`. These consist of:
 
-### Commitment Schemes: `zkpytoolkit.stdlib.commitment`
+* Commitment Schemes: `zkpytoolkit.stdlib.commitment`
 
-|Scheme | Implementation |
-| :---: | :---: |
-| Pedersen | `zkpytoolkit.stdlib.commitment.pedersen` |
-| SHA256 | `zkpytoolkit.stdlib.commitment.sha256` |
+    |Scheme | Implementation |
+    | :---: | :---: |
+    | Pedersen | `zkpytoolkit.stdlib.commitment.pedersen` |
+    | SHA256 | `zkpytoolkit.stdlib.commitment.sha256` |
 
-### Hash Functions: `zkpytoolkit.stdlib.hashes`
+* Hash Functions: `zkpytoolkit.stdlib.hashes`
 
-| Hash Function | Compatible Curves | Implementations |
-| :---: | :---: | :---: |
-| Pedersen | bls12_381, bn256, ristretto255 | `zkpytoolkit.stdlib.hashes.pedersen.bls12_381`, `zkpytoolkit.stdlib.hashes.pedersen.bn256`, `zkpytoolkit.stdlib.hashes.pedersen.ristretto255` |
-| SHA256 | all | `zkpytoolkit.stdlib.hashes.sha256` |
-| Poseidon | bls12_381 | `zkpytoolkit.stdlib.hashes.poseidon` |
+    | Hash Function | Compatible Curves | Implementations |
+    | :---: | :---: | :---: |
+    | Pedersen | bls12_381, bn256, ristretto255 | `zkpytoolkit.stdlib.hashes.pedersen.bls12_381`, `zkpytoolkit.stdlib.hashes.pedersen.bn256`, `zkpytoolkit.stdlib.hashes.pedersen.ristretto255` |
+    | SHA256 | all | `zkpytoolkit.stdlib.hashes.sha256` |
+    | Poseidon | bls12_381 | `zkpytoolkit.stdlib.hashes.poseidon` |
 
-### Elliptic Curve Cryptography: `zkpytoolkit.stdlib.ecc`
+* Elliptic Curve Cryptography: `zkpytoolkit.stdlib.ecc`
 
-| Curve | Implementation |
-| :---: | :---: |
-| Edwards | `zkpytoolkit.stdlib.ecc.edwards` |
+    | Curve | Implementation |
+    | :---: | :---: |
+    | Edwards | `zkpytoolkit.stdlib.ecc.edwards` |
 
-### Utilities: `zkpytoolkit.stdlib.utils`
+* Utilities: `zkpytoolkit.stdlib.utils`
 
-| Utility | Description | Implementation |
-| :---: | :---: | :---: |
-| Casting | From int to array of bool and vice versa | `zkpytoolkit.stdlib.utils.casts` |
-| Multiplexing | Used in Pedersen hash | `zkpytoolkit.stdlib.utils.multiplexer` |
-| Packing/Unpacking | Bool array to field and back | `zkpytoolkit.stdlib.utils.pack` |
+    | Utility | Description | Implementation |
+    | :---: | :---: | :---: |
+    | Casting | From int to array of bool and vice versa | `zkpytoolkit.stdlib.utils.casts` |
+    | Multiplexing | Used in Pedersen hash | `zkpytoolkit.stdlib.utils.multiplexer` |
+    | Packing/Unpacking | Bool array to field and back | `zkpytoolkit.stdlib.utils.pack` |
 
-Feel free to explore these modules for to enhance your zero-knowledge proof implementations.
+## Contributing
 
-## Note
-
-ZKPyToolkit is still a work in progress. Expect more backend support and improved expressiveness in future updates.
-
-Feel free to contribute and provide feedback!
+To contribute, simply submit a pull request. There are currently no strict guidelines, and any support is appreciated.
 
 ## License
 
-tbd.
+This project is dual-licensed under the **Apache 2.0** and **MIT** licenses. See the `LICENSE-APACHE` and `LICENSE-MIT` files for more details.
+
+## Acknowledgements
+
+This work is based upon the author's [master's thesis](https://fse.studenttheses.ub.rug.nl/33067/), which was written at the University of Groningen and TNO (Department of Applied Cryptography & Quantum Algorithms).
+
+## Issues and Contact
+
+- For reporting issues, please use [GitHub Issues](https://github.com/lorenzorota/zkpyc/issues).
+- For direct inquiries, you can contact me at **<lorenzo.rota@hotmail.com>**.

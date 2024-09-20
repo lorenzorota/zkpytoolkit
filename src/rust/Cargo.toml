@@ -14,7 +14,7 @@ pyo3 = { version = "0.20", features = ["abi3-py37"] }
 pythonize = { version = "0.20" }
 rug = { version = "1.11" }
 bincode = "1"
-zkpyc = { path = "zkpyc" }
+zkpyc = { git = "https://github.com/lorenzorota/zkpyc.git", rev = "1cc4e32" }
 circ = { git = "https://github.com/circify/circ.git", rev = "a26533ba" }
 circ_fields = { git = "https://github.com/circify/circ.git", rev = "a26533ba" }
 circ_opt = { git = "https://github.com/circify/circ.git", rev = "a26533ba" }
@@ -41,10 +41,6 @@ overflow-checks = true
 
 [workspace]
 members = [
-    "zkpyc",
     "zkif-bellman",
     "zkif-bulletproofs"
-#     "cryptography-openssl",
-#     "cryptography-x509",
-#     "cryptography-x509-validation",
 ]
